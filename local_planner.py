@@ -17,7 +17,7 @@ from math import sin, cos, pi, sqrt
 class LocalPlanner:
     def __init__(self, num_paths, path_offset, circle_offsets, circle_radii, 
                  path_select_weight, time_gap, a_max, slow_speed, 
-                 stop_line_buffer):
+                 stop_line_buffer, prev_best_path):
         self._num_paths = num_paths
         self._path_offset = path_offset
         self._path_optimizer = path_optimizer.PathOptimizer()
@@ -28,6 +28,7 @@ class LocalPlanner:
         self._velocity_planner = \
             velocity_planner.VelocityPlanner(time_gap, a_max, slow_speed, 
                                              stop_line_buffer)
+        self.prev_best_path = []
 
     ######################################################
     ######################################################
@@ -87,12 +88,13 @@ class LocalPlanner:
         # consecutive waypoints, then use the np.arctan2() function.
         # TODO: INSERT YOUR CODE BETWEEN THE DASHED LINES
         # ------------------------------------------------------------------
-        # if ...
-        # delta_x = ...
-        # delta_y = ...
-        # else: ...
-        # ...
-        # heading = ...
+        if goal_index < len(waypoints):
+            delta_x = waypoints[goal_index+1][0] - waypoints[goal_index][0]
+            delta_y = waypoints[goal_index+1][1] - waypoints[goal_index][1]
+        else:
+            delta_x = waypoints[goal_index][0] - waypoints[goal_index - 1][0]
+            delta_y = waypoints[goal_index][1] - waypoints[goal_index - 1][1]
+        heading = np.arctan2(delta_y, delta_x)
         # ------------------------------------------------------------------
 
         # Compute the center goal state in the local frame using 
@@ -105,8 +107,8 @@ class LocalPlanner:
         # This is done by subtracting the ego_state from the goal_state_local.
         # TODO: INSERT YOUR CODE BETWEEN THE DASHED LINES
         # ------------------------------------------------------------------
-        # goal_state_local[0] -= ... 
-        # goal_state_local[1] -= ... 
+        goal_state_local[0] -= ego_state[0]
+        goal_state_local[1] -= ego_state[1]
         # ------------------------------------------------------------------
 
         # Rotate such that the ego state has zero heading in the new frame.
@@ -116,15 +118,15 @@ class LocalPlanner:
         # current yaw corresponds to theta = 0 in the new local frame.
         # TODO: INSERT YOUR CODE BETWEEN THE DASHED LINES
         # ------------------------------------------------------------------
-        # goal_x = ...
-        # goal_y = ...
+        goal_x = goal_state_local[0] * np.cos(ego_state[2]) + goal_state_local[1] * np.sin(ego_state[2])
+        goal_y = goal_state_local[0] * -np.sin(ego_state[2]) + goal_state_local[1] * np.cos(ego_state[2])
         # ------------------------------------------------------------------
 
         # Compute the goal yaw in the local frame by subtracting off the 
         # current ego yaw from the heading variable.
         # TODO: INSERT YOUR CODE BETWEEN THE DASHED LINES
         # ------------------------------------------------------------------
-        # goal_t = ...
+        goal_t = heading - ego_state[2]
         # ------------------------------------------------------------------
 
         # Velocity is preserved after the transformation.
@@ -151,8 +153,8 @@ class LocalPlanner:
             # and sin(goal_theta + pi/2), respectively.
             # TODO: INSERT YOUR CODE BETWEEN THE DASHED LINES
             # ------------------------------------------------------------------
-            # x_offset = ...
-            # y_offset = ...
+            x_offset = offset * np.cos(goal_t + pi/2)
+            y_offset = offset * np.sin(goal_t + pi/2)
             # ------------------------------------------------------------------
 
             goal_state_set.append([goal_x + x_offset, 

@@ -113,7 +113,7 @@ class BehaviouralPlanner:
             # ------------------------------------------------------------------
             goal_index, stop_sign_found = self.check_for_stop_signs(waypoints, closest_index, goal_index)
             self._goal_index = goal_index
-            self._goal_state = [waypoints[goal_index][0], waypoints[goal_index][1], waypoints[goal_index][2]]
+            self._goal_state = waypoints[self._goal_index]
             # ------------------------------------------------------------------
 
             # If stop sign found, set the goal to zero speed, then transition to 
@@ -121,7 +121,7 @@ class BehaviouralPlanner:
             # TODO: INSERT YOUR CODE BETWEEN THE DASHED LINES
             # ------------------------------------------------------------------
             if stop_sign_found:
-                self._goal_state = [waypoints[goal_index][0], waypoints[goal_index][1], 0]
+                self._goal_state[2] = 0
                 self._state = DECELERATE_TO_STOP
             # ------------------------------------------------------------------
 
@@ -134,8 +134,9 @@ class BehaviouralPlanner:
         elif self._state == DECELERATE_TO_STOP:
             # TODO: INSERT YOUR CODE BETWEEN THE DASHED LINES
             # ------------------------------------------------------------------
-            if closed_loop_speed < STOP_THRESHOLD:
+            if abs(closed_loop_speed) <= STOP_THRESHOLD:
                 self._state = STAY_STOPPED
+                self._stop_count = 0
             # ------------------------------------------------------------------
 
             pass
@@ -154,6 +155,7 @@ class BehaviouralPlanner:
                 # --------------------------------------------------------------
                 closest_len, closest_index =  get_closest_index(waypoints, ego_state)
                 goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
+                while waypoints[goal_index][2] <= 0.1: goal_index += 1
                 # --------------------------------------------------------------
 
                 # We've stopped for the required amount of time, so the new goal 
@@ -161,9 +163,10 @@ class BehaviouralPlanner:
                 # that is the lookahead distance away.
                 # TODO: INSERT YOUR CODE BETWEEN THE DASHED LINES
                 # --------------------------------------------------------------
-                goal_index, stop_sign_found = self.check_for_stop_signs(waypoints, closest_index, goal_index)
+                # Debug
+                _goal_index, stop_sign_found = self.check_for_stop_signs(waypoints, closest_index, goal_index)
                 self._goal_index = goal_index
-                self._goal_state = [waypoints[goal_index][0], waypoints[goal_index][1], 0]
+                self._goal_state = waypoints[goal_index]
                 # --------------------------------------------------------------
 
                 # If the stop sign is no longer along our path, we can now
@@ -172,6 +175,7 @@ class BehaviouralPlanner:
                 # --------------------------------------------------------------
                 if not stop_sign_found:
                    self._state = FOLLOW_LANE
+                   self._stop_count = 0
                 # --------------------------------------------------------------
 
                 pass
@@ -184,6 +188,7 @@ class BehaviouralPlanner:
                 # --------------------------------------------------------------
 
                 pass
+
         else:
             raise ValueError('Invalid state value.')
 
@@ -251,7 +256,9 @@ class BehaviouralPlanner:
         # TODO: INSERT YOUR CODE BETWEEN THE DASHED LINES
         # ------------------------------------------------------------------
         while wp_index < len(waypoints) - 1:
-          arc_length += 1
+          arc_length += np.sqrt((waypoints[wp_index][0] - waypoints[wp_index+1][0])**2 + (waypoints[wp_index][1] - waypoints[wp_index+1][1])**2)
+          if arc_length > self._lookahead: break
+          wp_index += 1
         # ------------------------------------------------------------------
 
         return wp_index

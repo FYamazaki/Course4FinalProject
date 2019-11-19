@@ -82,8 +82,8 @@ class CollisionChecker:
 
                 # TODO: INSERT YOUR CODE BETWEEN THE DASHED LINES
                 # --------------------------------------------------------------
-                circle_locations[:, 0] = path[0][j] + circle_offset*cos(path[2][j])
-                circle_locations[:, 1] = path[1][j] + circle_offset*sin(path[2][j])
+                circle_locations[:, 0] = [i * int(np.cos(path[2][j])) for i in self._circle_offsets] + path[0][j]
+                circle_locations[:, 1] = [i * int(np.sin(path[2][j])) for i in self._circle_offsets] + path[1][j]
                 # --------------------------------------------------------------
 
                 # Assumes each obstacle is approximated by a collection of
@@ -164,7 +164,7 @@ class CollisionChecker:
                 # A lower score implies a more suitable path.
                 # TODO: INSERT YOUR CODE BETWEEN THE DASHED LINES
                 # --------------------------------------------------------------
-                score = np.sqrt((goal_state[0] - paths[i][0]) **2 + (goal_state[1] - paths[i][1])**2)
+                score = np.sqrt((goal_state[0] - paths[i][0][len(paths[i][0])-1])**2 + (goal_state[1] - paths[i][1][len(paths[i][0])-1])**2)
                 # --------------------------------------------------------------
 
                 # Compute the "proximity to other colliding paths" score and
@@ -177,8 +177,9 @@ class CollisionChecker:
                         if not collision_check_array[j]:
                             # TODO: INSERT YOUR CODE BETWEEN THE DASHED LINES
                             # --------------------------------------------------
-                            score += self._weight * np.sqrt((goal_state[0] - paths[i][0]) **2 + (goal_state[1] - paths[i][1])**2)
+                            score += self._weight * paths[i][2][j]
                             # --------------------------------------------------
+                            pass
 
             # Handle the case of colliding paths.
             else:

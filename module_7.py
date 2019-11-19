@@ -49,7 +49,7 @@ NUM_PEDESTRIANS        = 0      # total number of pedestrians to spawn
 NUM_VEHICLES           = 2      # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
-CLIENT_WAIT_TIME       = 100      # wait time for client before starting episode
+CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
                                 # used to make sure the server loads
                                 # consistently
 
@@ -103,6 +103,7 @@ LP_FREQUENCY_DIVISOR   = 2                # Frequency divisor to make the
                                           # (which operates at the simulation
                                           # frequency). Must be a natural
                                           # number.
+PREV_BEST_PATH         = []
 
 # Course 4 specific parameters
 C4_STOP_SIGN_FILE        = 'stop_sign_params.txt'
@@ -621,7 +622,8 @@ def exec_waypoint_nav_demo(args):
                                         TIME_GAP,
                                         A_MAX,
                                         SLOW_SPEED,
-                                        STOP_LINE_BUFFER)
+                                        STOP_LINE_BUFFER,
+                                        PREV_BEST_PATH)
         bp = behavioural_planner.BehaviouralPlanner(BP_LOOKAHEAD_BASE,
                                                     stopsign_fences,
                                                     LEAD_VEHICLE_LOOKAHEAD)
@@ -754,10 +756,10 @@ def exec_waypoint_nav_demo(args):
                 best_index = lp._collision_checker.select_best_path_index(paths, collision_check_array, bp._goal_state)
                 # If no path was feasible, continue to follow the previous best path.
                 if best_index == None:
-                    best_path = lp._prev_best_path
+                    best_path = lp.prev_best_path
                 else:
                     best_path = paths[best_index]
-                    lp._prev_best_path = best_path
+                    lp.prev_best_path = best_path
 
                 # Compute the velocity profile for the path, and compute the waypoints.
                 # Use the lead vehicle to inform the velocity profile's dynamic obstacle handling.
